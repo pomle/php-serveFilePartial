@@ -30,12 +30,19 @@ function serveFilePartial($fileName, $fileTitle = null, $contentType = 'applicat
 		### Offset signifies where we should begin to read the file
 		$byteOffset = (int)$match[1];
 
-		### Length is for how long we should read the file according to the browser, and can never go beyond the file size
-		if( isset($match[2]) )
-			$byteLength = min( (int)$match[2], $byteLength - $byteOffset);
 
+		### Length is for how long we should read the file according to the browser, and can never go beyond the file size
+		if( isset($match[2]) ){
+			$finishBytes = (int)$match[2];
+	        	$byteLength = $finishBytes + 1;
+		} else {
+			$finishBytes = $fileSize - 1;
+		}
+	
+		$cr_header = sprintf('Content-Range: bytes %d-%d/%d', $byteOffset, $finishBytes, $fileSize);
+	
 		header("HTTP/1.1 206 Partial content");
-		header(sprintf('Content-Range: bytes %d-%d/%d', $byteOffset, $byteLength - 1, $fileSize));  ### Decrease by 1 on byte-length since this definition is zero-based index of bytes being sent
+		header($cr_header);  ### Decrease by 1 on byte-length since this definition is zero-based index of bytes being sent
 	}
 
 	$byteRange = $byteLength - $byteOffset;
